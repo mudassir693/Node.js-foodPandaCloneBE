@@ -96,6 +96,14 @@ router.get('/getByRestirant/:id',async(req,res)=>{
 // @access resturantOwner or Admin
 router.put('/update/:pid',verifyResturent,async(req,res)=>{
     try {
+
+        const isResp = await Food.findById(req.params.pid)
+        
+        if(isResp.ResturantId !== req.user.id){
+            return res.status(400).json({data:`${isResp} is not your Food`, status:400,error:true})
+        } 
+
+
         const isFoodAvailable = await Food.find({$and:[{Title:req.body.Title},{ResturantId:req.body.ResturantId}]})
         if(isFoodAvailable.length>0){
             console.log(isFoodAvailable)
@@ -114,6 +122,7 @@ router.put('/update/:pid',verifyResturent,async(req,res)=>{
 // @access resturantOwner or Admin
 router.delete('/delete/:pid',verifyResturent,async(req,res)=>{
     try {
+
         const resp = await Food.findByIdAndRemove(req.params.pid)
         return res.status(200).json({data:resp,status:200,error:false})
     } catch (error) {
