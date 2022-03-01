@@ -12,13 +12,15 @@ router.post('/register',async(req,res)=>{
         const {Name,Password, Address, PhoneNumber, Varified, CNIC ,Foods} = req.body
 
         const isRestAvailable = await Resturants.findOne({PhoneNumber})
+        console.log('checkPoint_1: ',isRestAvailable)
         if(isRestAvailable){
             return res.status(200).json({data:"Phone number is already register",status:400,error:true})
         }
+        console.log('checkPoint_2: ',isRestAvailable)
 
-        const salt = bcrypt.genSaltSync(proces.env.BcryptSalt);
+        const salt = bcrypt.genSaltSync(10);
         const newHashPassword = bcrypt.hashSync(Password, salt);
-
+        console.log('checkPoint_3: ',isRestAvailable)
         const newResturant = new Resturants({
             Name,
             Password:newHashPassword,

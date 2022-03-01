@@ -100,7 +100,7 @@ router.put('/update/:pid',verifyResturent,async(req,res)=>{
         const isResp = await Food.findById(req.params.pid)
         
         if(isResp.ResturantId !== req.user.id){
-            return res.status(400).json({data:`${isResp} is not your Food`, status:400,error:true})
+            return res.status(400).json({data:`This ${isResp.Title} is not your Food`, status:400,error:true})
         } 
 
 
