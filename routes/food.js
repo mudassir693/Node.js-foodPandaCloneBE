@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const {verifyAdmin} = require('../middleware/authMiddleware')
+const {verifyAdmin,verifyResturent} = require('../middleware/authMiddleware')
 const Food = require('../models/Food')
 const eClient = require('../config/ElasticSearchConfig')
 
@@ -8,7 +8,7 @@ const eClient = require('../config/ElasticSearchConfig')
 // @desc Add Food
 // @access Resturant and Team Member
 
-router.post('/add',verifyAdmin,async(req,res)=>{
+router.post('/add',verifyResturent,async(req,res)=>{
     try {
         const {Title,ResturantId,Image,Price,DiscountPercent,Rating,Description,Ingredients} = req.body
         const isFoodAvailableFromSameResturant = await Food.find({ResturantId})
@@ -94,7 +94,7 @@ router.get('/getByRestirant/:id',async(req,res)=>{
 // @route PUT api/v1/food/update/:id
 // @desc Update Foods
 // @access resturantOwner or Admin
-router.put('/update/:pid',async(req,res)=>{
+router.put('/update/:pid',verifyResturent,async(req,res)=>{
     try {
         const isFoodAvailable = await Food.find({$and:[{Title:req.body.Title},{ResturantId:req.body.ResturantId}]})
         if(isFoodAvailable.length>0){
@@ -112,7 +112,7 @@ router.put('/update/:pid',async(req,res)=>{
 // @route DELETE api/v1/food/delete/:id
 // @desc Remove Foods
 // @access resturantOwner or Admin
-router.delete('/delete/:pid',async(req,res)=>{
+router.delete('/delete/:pid',verifyResturent,async(req,res)=>{
     try {
         const resp = await Food.findByIdAndRemove(req.params.pid)
         return res.status(200).json({data:resp,status:200,error:false})

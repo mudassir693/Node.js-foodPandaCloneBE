@@ -1,5 +1,10 @@
 const jwt = require('jsonwebtoken')
 
+// id: ,
+// category: ,
+// AdminTeam: ,
+// Role: ,
+
 const AuthUser = (req,res,next)=>{
     try {
         const authToken = req.headers.token
@@ -42,4 +47,14 @@ const verifyAdminAndUser = (req,res,next) => {
     })
 }
 
-module.exports = {AuthUser,verifyAdmin,verifyAdminAndUser}
+const verifyResturent = (req,res,next) => {
+    AuthUser(req,res,()=>{
+        if(req.user.category=='Resturant' || req.user.AdminTeam){
+            next()
+        }else{
+            return res.status(400).json({data:"Just Resturant owner allow to do that, Thank you.",status:400,error:true})
+        }
+    })
+}
+
+module.exports = {AuthUser,verifyAdmin,verifyAdminAndUser,verifyResturent}
