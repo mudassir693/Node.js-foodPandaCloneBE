@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const {verifyAdmin} = require('../middleware/authMiddleware')
 const Food = require('../models/Food')
+const eClient = require('../config/ElasticSearchConfig')
 
 
 // @route POST api/v1/food/add
@@ -26,9 +27,41 @@ router.post('/add',verifyAdmin,async(req,res)=>{
             Ingredients
         })
         const resp = await newFood.save()
+
+        const resp2 = await eClient.index({
+            index: 'foodpanda-foods',
+            document: {
+                id: resp._id,
+                title: Title
+            }
+        }) 
+
+        // console.log(resp2)
         return res.status(201).json({data:resp,status:201,error:false})
     } catch (error) {
+        console.log(error)
         return res.status(500).json({data:error,status:500,error:true})
+    }
+})
+
+// @route GET api/v1/food/getAll
+// @desc GET All Foods
+// @access All
+router.get('/getFromESearch/:word',async(req,res)=>{
+    try {
+       const resp = await eClient.search({
+            index:'foodpanda-foods',
+            query:{
+                wildcard:{
+                    'title.keyword':`*${req.params.word}*`
+                }
+            }
+        }
+        )
+
+        return res.status(200).json({data:resp.hits.hits,status:200,error:false})
+    } catch (error) {
+        return res.status(200).json({data:error,status:500,error:true})
     }
 })
 
