@@ -1,79 +1,78 @@
-const router = require('express').Router()
-const Cart = require('../models/Cart')
-const {verifyAdminAndUser,verifyAdmin} = require('../middleware/authMiddleware')
+const router = require('express').Router();
+const Cart = require('../models/Cart');
+const { verifyAdminAndUser, verifyAdmin } = require('../middleware/authMiddleware');
 
-// @route POST api/v1/cart/add
-// @desc Add Cart
-// @access resturantOwner or Admin
-router.post("/add/:id",verifyAdminAndUser,async(req,res)=>{
-    const {UserId,...other} = req.body;
+router.post("/add/:id", verifyAdminAndUser, async (req, res) => {
+    const { UserId, Foods, ...other } = req.body;
+    const userIdFromParam = req.params.id;
+
+    if (!UserId || !Foods) {
+        return res.status(400).json({ data: 'UserId and Foods are required', error: true, status: 400 });
+    }
+
+    if (userIdFromParam !== UserId) {
+        return res.status(403).json({ data: 'UserId mismatch', error: true, status: 403 });
+    }
+
     try {
-        const cart = await Cart.findOne({UserId:req.params.id})
-        if(cart) {
-            const updResp = await Cart.findByIdAndUpdate(cart._id,{$set:other},{new:true})
-            return res.status(200).json({data:updResp,status:204,error:false})
+        const cart = await Cart.findOne({ UserId: userIdFromParam });
+        if (cart) {
+            const updatedCart = await Cart.findByIdAndUpdate(cart._id, { $set: other }, { new: true });
+            return res.status(200).json({ data: updatedCart, status: 200, error: false });
         }
-        const newCart = new Cart({
-            UserId:req.body.UserId,
-            Foods:req.body.Foods
-        })
 
-        const newResp = await newCart.save()
-        return res.status(201).json({data:newResp,status:201,error:false})
+        const newCart = new Cart({ UserId, Foods });
+        const savedCart = await newCart.save();
+        return res.status(201).json({ data: savedCart, status: 201, error: false });
 
     } catch (error) {
-        return res.status(500).json({data:error,status:500,error:error})
+        return res.status(500).json({ data: error.message, status: 500, error: true });
     }
-})
+});
 
-// @route Get /api/v1/cart/get
-// @desc Get All Users Cart 
-// @Access Admin
-router.get('/get',verifyAdmin,async(req,res)=>{
+router.get('/get', verifyAdmin, async (req, res) => {
     try {
-        const resp = await Cart.find()
-        return res.status(200).json({data:resp,status:200,error:false})
+        const carts = await Cart.find();
+        return res.status(200).json({ data: carts, status: 200, error: false });
     } catch (error) {
-        return res.status(200).json({data:error,status:500,error:true})
+        return res.status(500).json({ data: error.message, status: 500, error: true });
     }
-})
+});
 
-// @route Get /api/v1/cart/getByUser/:UserId
-// @desc Get Each Users Cart By UserId 
-// @Access Admin
-router.get('/getByUser/:uid',verifyAdminAndUser,async(req,res)=>{
+router.get('/getByUser/:uid', verifyAdminAndUser, async (req, res) => {
     try {
-        const resp = await Cart.aggregate([
-            {$match:{UserId:req.params.uid}}
-        ])
-        return res.status(200).json({data:resp,status:200,error:false})
+        const cart = await Cart.find({ UserId: req.params.uid });
+        if (!cart.length) {
+            return res.status(404).json({ data: 'No cart found for this user', status: 404, error: true });
+        }
+        return res.status(200).json({ data: cart, status: 200, error: false });
     } catch (error) {
-        return res.status(500).json({data:error,status:500,error:true})
+        return res.status(500).json({ data: error.message, status: 500, error: true });
     }
-})
+});
 
-
-// @route Get /api/v1/cart/get/:id
-// @desc Get Each Users Cart By CartId 
-// @Access Admin
-router.get('/get/:id',verifyAdminAndUser,async(req,res)=>{
+router.get('/get/:id', verifyAdminAndUser, async (req, res) => {
     try {
-        const resp = await Cart.findById(req.params.id)
-        return res.status(200).json({data:resp,status:200,error:false})
+        const cart = await Cart.findById(req.params.id);
+        if (!cart) {
+            return res.status(404).json({ data: 'Cart not found', status: 404, error: true });
+        }
+        return res.status(200).json({ data: cart, status: 200, error: false });
     } catch (error) {
-        return res.status(500).json({data:error,status:500,error:false})
+        return res.status(500).json({ data: error.message, status: 500, error: true });
     }
-})
+});
 
-// @route Get /api/v1/cart/delet/:id
-// @desc Delete Users Cart By CartId 
-// @Access Admin
-router.delete('/delete/:id',verifyAdmin,async(req,res)=>{
+router.delete('/delete/:id', verifyAdmin, async (req, res) => {
     try {
-        const resp = await Cart.findByIdAndDelete(req.params.id)
-        return res.status(200).json({data:resp,status:200,error:false})
+        const cart = await Cart.findByIdAndDelete(req.params.id);
+        if (!cart) {
+            return res.status(404).json({ data: 'Cart not found', status: 404, error: true });
+        }
+        return res.status(200).json({ data: 'Cart deleted successfully', status: 200, error: false });
     } catch (error) {
-        return res.status(500).json({data:error,status:500,error:true})
+        return res.status(500).json({ data: error.message, status: 500, error: true });
     }
-})
-module.exports = router
+});
+
+module.exports = router;
