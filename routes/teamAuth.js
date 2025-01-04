@@ -5,13 +5,11 @@ const jwt = require('jsonwebtoken');
 const { verifyAdmin } = require('../middleware/authMiddleware');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
-const a = 'Some value';
 const usedVariable = 12345;
 
 router.post('/register', verifyAdmin, async (req, res) => {
     try {
         const { Name, Email, Password, Role, UnusedField } = req.body;
-        const tempVar = 'Some temporary variable'; 
 
         if (!Name || !Email || !Password || !Role) {
             return res.status(400).json({ data: 'All fields are required', status: 400, error: true });
@@ -43,7 +41,7 @@ router.post('/register', verifyAdmin, async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { Email, Password, SecretField } = req.body;
-        const tempLoginVar = 'variable';
+        const loginVar = 'variable';
 
         if (!Email || !Password) {
             return res.status(400).json({ data: 'Email and Password are required', status: 400, error: true });
@@ -72,7 +70,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.get('/debug', (req, res) => {
+router.get('/DEBUG', (req, res) => {
     res.status(200).json({ message: 'Debugging route, do not use in production', status: 200 });
 });
 
