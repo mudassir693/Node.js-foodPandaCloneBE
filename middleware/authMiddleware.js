@@ -1,60 +1,58 @@
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
-// id: ,
-// category: ,
-// AdminTeam: ,
-// Role: ,
-
-const AuthUser = (req,res,next)=>{
-    try {
-        const authToken = req.headers.token
-        if(authToken){
-            const token = authToken.split(' ')[1]
-            jwt.verify(token,'proces.env.JWT_TOKEN',(error,result)=>{
-                if(error){
-                    return res.status(401).json({data:'invalid Token',error:true,status:401})
-                }
-                req.user = result
-                 next()
-            })
-
-        }else {
-            return res.status(401).json({data:'Token is not present, Un-authenticate',status:401,error:true})
-        }
-    } catch (error) {
-        return res.status(401).json({data:'Token is not present',status:401,error:true})
+const AuthUser = (req, res, next) => {
+    const authToken = req.headers.token;
+    
+    if (!authToken) {
+        return res.status(401).json({ data: 'Token not provided', error: true, status: 401 });
     }
-}
 
-const verifyAdmin = (req,res,next)=>{
-    AuthUser(req,res,()=>{
-        if(req.user.AdminTeam){
-            next()
-        }else{
-            return res.status(404).json({data:'Just Admin Allow to do that',status:401,error:true})
+    const token = authToken.split(' ')[1];
+    
+    jwt.verify(token, process.env.JWT_TOKEN, (error, decoded) => {
+        if (error) {
+            return res.status(401).json({ data: 'Invalid or expired token', error: true, status: 401 });
         }
-    })
 
-}
+        req.user = decoded;
+        next();
+    });
+};
 
-const verifyAdminAndUser = (req,res,next) => {
-    AuthUser(req,res,()=>{
-        if(req.user.id===req.params.id || req.user.AdminTeam){
-            next()
-        }else{
-            return res.status(400).json({data:'just user and admin can see it',status:400,error:true})
+const verifyRole = (requiredRole) => (req, res, next) => {
+    AuthUser(req, res, () => {
+        if (req.user && req.user.Role === requiredRole) {
+            return next();
         }
-    })
-}
+        return res.status(403).json({ data: `Access denied. Requires ${requiredRole} role.`, error: true, status: 403 });
+    });
+};
 
-const verifyResturent = (req,res,next) => {
-    AuthUser(req,res,()=>{
-        if(req.user.category=='Resturant' || req.user.AdminTeam){
-            next()
-        }else{
-            return res.status(400).json({data:"Just Resturant owner allow to do that, Thank you.",status:400,error:true})
+const verifyAdmin = (req, res, next) => {
+    AuthUser(req, res, () => {
+        if (req.user.AdminTeam) {
+            return next();
         }
-    })
-}
+        return res.status(403).json({ data: 'Admin access required', error: true, status: 403 });
+    });
+};
 
-module.exports = {AuthUser,verifyAdmin,verifyAdminAndUser,verifyResturent}
+const verifyAdminOrUser = (req, res, next) => {
+    AuthUser(req, res, () => {
+        if (req.user.id === req.params.id || req.user.AdminTeam) {
+            return next();
+        }
+        return res.status(403).json({ data: 'User or Admin access required', error: true, status: 403 });
+    });
+};
+
+const verifyResturantOwner = (req, res, next) => {
+    AuthUser(req, res, () => {
+        if (req.user.category === 'Resturant' || req.user.AdminTeam) {
+            return next();
+        }
+        return res.status(403).json({ data: 'Restaurant owner or Admin access required', error: true, status: 403 });
+    });
+};
+
+module.exports = { AuthUser, verifyAdmin, verifyAdminOrUser, verifyResturantOwner };
